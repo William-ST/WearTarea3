@@ -120,7 +120,7 @@ public class TreeMapperMusic {
         mediaDescriptionBuilder.setIconUri(iconUri);
         Bundle extras = new Bundle();
         extras.putInt(CONTENT_STYLE_BROWSABLE_HINT,
-                CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
+                CONTENT_STYLE_LIST_ITEM_HINT_VALUE);
         extras.putInt(CONTENT_STYLE_PLAYABLE_HINT,
                 CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
 

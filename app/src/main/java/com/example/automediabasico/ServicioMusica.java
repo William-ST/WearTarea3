@@ -153,7 +153,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
                         mediaPlayer.start();
                         mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PLAYING));
                     }
-                }, 1000);
+                }, 500); //Par que se aprecie el STATE_BUFFERING
             }
         });
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
