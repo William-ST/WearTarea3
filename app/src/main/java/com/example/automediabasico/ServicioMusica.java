@@ -129,7 +129,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
                 .build();
     }
 
-    private void handlePlay() {
+    private void handlePlay() {                                                           
         mPlayer.seekTo(0);
         mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_BUFFERING));
         Log.d(TAG, "handlePlay 1");
