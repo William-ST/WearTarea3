@@ -7,14 +7,17 @@ import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static com.example.automediabasico.Constant.CONTENT_STYLE_BROWSABLE_HINT;
 import static com.example.automediabasico.Constant.CONTENT_STYLE_GRID_ITEM_HINT_VALUE;
 import static com.example.automediabasico.Constant.CONTENT_STYLE_LIST_ITEM_HINT_VALUE;
 import static com.example.automediabasico.Constant.CONTENT_STYLE_PLAYABLE_HINT;
+import static com.example.automediabasico.Constant.EXTRA_METADATA_ENABLED_VALUE;
 
 /**
  * Created by William_ST on 05/03/19.
@@ -86,19 +89,19 @@ public class TreeMapperMusic {
     }
 
     public List<MediaBrowserCompat.MediaItem> getLoanChildPLayer(String filterCategory, String key) {
-        List<MediaBrowserCompat.MediaItem> items =  new ArrayList<>();
+        List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
         for (PistaAudio pistaAudio : pistaAudioList) {
             if (filterCategory.equalsIgnoreCase(MEDIA_ID_MUSICS_BY_GENRE)) {
                 if (pistaAudio.getGenre().equalsIgnoreCase(key)) {
-                    items.add(createMediaItem(items.size()+"", pistaAudio.getTitle(), Uri.parse(pistaAudio.getSource()), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+                    items.add(createMediaItem(pistaAudio.getId(), pistaAudio.getTitle(), Uri.parse(pistaAudio.getImage()), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
                 }
             } else if (filterCategory.equalsIgnoreCase(MEDIA_ID_MUSICS_BY_ALBUM)) {
                 if (pistaAudio.getAlbum().equalsIgnoreCase(key)) {
-                    items.add(createMediaItem(items.size()+"", pistaAudio.getTitle(), Uri.parse(pistaAudio.getSource()), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+                    items.add(createMediaItem(pistaAudio.getId(), pistaAudio.getTitle(), Uri.parse(pistaAudio.getImage()), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
                 }
             } else if (filterCategory.equalsIgnoreCase(MEDIA_ID_MUSICS_BY_ARTIST)) {
                 if (pistaAudio.getArtist().equalsIgnoreCase(key)) {
-                    items.add(createMediaItem(items.size()+"", pistaAudio.getTitle(), Uri.parse(pistaAudio.getSource()), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+                    items.add(createMediaItem(pistaAudio.getId(), pistaAudio.getTitle(), Uri.parse(pistaAudio.getImage()), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
                 }
             }
         }
@@ -115,6 +118,33 @@ public class TreeMapperMusic {
         mediaDescriptionBuilder.setMediaId(mediaId);
         mediaDescriptionBuilder.setTitle(folderName);
         mediaDescriptionBuilder.setIconUri(iconUri);
+        Bundle extras = new Bundle();
+        extras.putInt(CONTENT_STYLE_BROWSABLE_HINT,
+                CONTENT_STYLE_LIST_ITEM_HINT_VALUE);
+        extras.putInt(CONTENT_STYLE_PLAYABLE_HINT,
+                CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
+
+        if (flag == MediaBrowserCompat.MediaItem.FLAG_PLAYABLE) {
+            Random rand = new Random();
+            int number = rand.nextInt(4);
+            Log.d(TreeMapperMusic.class.getCanonicalName(), "number: " + number);
+            switch (number) {
+                case 1:
+                    extras.putLong(Constant.EXTRA_IS_EXPLICIT, EXTRA_METADATA_ENABLED_VALUE);
+                    break;
+                case 2:
+                    extras.putLong(Constant.EXTRA_IS_DOWNLOADED, EXTRA_METADATA_ENABLED_VALUE);
+                    break;
+                case 3:
+                    extras.putLong(Constant.EXTRA_IS_EXPLICIT, EXTRA_METADATA_ENABLED_VALUE);
+                    extras.putLong(Constant.EXTRA_IS_DOWNLOADED, EXTRA_METADATA_ENABLED_VALUE);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        mediaDescriptionBuilder.setExtras(extras);
         return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flag);
     }
 }

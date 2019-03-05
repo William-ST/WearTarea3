@@ -19,15 +19,18 @@ import com.google.gson.GsonBuilder;
 public class GetMusicRepository {
 
     private final String TAG = GetMusicRepository.class.getCanonicalName();
-    private final String URL = "http://storage.googleapis.com/automotive-media/music.json";
+    private final String URL = "https://firebasestorage.googleapis.com/v0/b/master-1e202.appspot.com/o/music.json?alt=media";
+    private final String URL_MUSIC = "http://storage.googleapis.com/automotive-media/music.json";
     private RequestQueue requestQueue;
     private Gson gson;
     private Musica musica;
+    private Context context;
 
     public GetMusicRepository(Context context) {
+        this.context = context;
         requestQueue = Volley.newRequestQueue(context);
         GsonBuilder gsonBuilder = new GsonBuilder();
-        gson = gsonBuilder.create();
+        gson = gsonBuilder.create();//.setLenient()
     }
 
     public void getRepositorioMusical() {
@@ -38,13 +41,15 @@ public class GetMusicRepository {
     private final Response.Listener<String> onPostsLoaded = new Response.Listener<String>() {
         @Override
         public void onResponse(String response) {
+            System.out.println(response);
             musica = gson.fromJson(response, Musica.class);
             Log.d(TAG, "Número de pistas de audio: " + musica.getMusica().size());
-            int slashPos = URL.lastIndexOf('/');
-            String path = URL.substring(0, slashPos + 1);
+            int slashPos = URL_MUSIC.lastIndexOf('/');
+            String path = URL_MUSIC.substring(0, slashPos + 1);
 
             for (int i = 0; i < musica.getMusica().size(); i++) {
                 PistaAudio pista = musica.getMusica().get(i);
+                pista.setId(String.valueOf(i+1));
                 if (!pista.getSource().startsWith("http"))
                     pista.setSource(path + pista.getSource());
                 if (!pista.getImage().startsWith("http"))
@@ -52,6 +57,7 @@ public class GetMusicRepository {
                 musica.getMusica().set(i, pista);
             }
 
+            ((App)context.getApplicationContext()).setMusica(musica);
             if (parseTree != null) {
                 parseTree.parse(new TreeMapperMusic(musica));
             }

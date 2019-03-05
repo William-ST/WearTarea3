@@ -35,69 +35,100 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
     private final String TAG = ServicioMusica.class.getCanonicalName();
 
     private MediaSessionCompat mSession;
-    private List<MediaMetadataCompat> mMusic;
     private MediaPlayer mPlayer;
     private MediaMetadataCompat mCurrentTrack;
+    private final String LIKE_ACTION = "like_action", NOT_LIKE_ACTION = "not_like_action";
+    /*
+    private MediaMetadataCompat getFirstMusic() {
+        PistaAudio foundPistaAudio = ((App) getApplication()).getMusica().getMusica().get(0);
+        MediaMetadataCompat mediaMetadata = null;
+        if (foundPistaAudio != null) {
+            mediaMetadata = new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, foundPistaAudio.getSource())
+                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, foundPistaAudio.getAlbum())
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, foundPistaAudio.getTitle())
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, foundPistaAudio.getArtist())
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, foundPistaAudio.getDuration()*1000).build();
+        }
+        return mediaMetadata;
+    }
+
+    private MediaMetadataCompat getMusicByMediaId(String mediaId) {
+        PistaAudio foundPistaAudio = null;
+        for (PistaAudio pistaAudio : ((App) getApplication()).getMusica().getMusica()) {
+            if (pistaAudio.getId().equalsIgnoreCase(mediaId)) {
+                foundPistaAudio = pistaAudio;
+                break;
+            }
+        }
+        MediaMetadataCompat mediaMetadata = null;
+        if (foundPistaAudio != null) {
+            mediaMetadata = new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, foundPistaAudio.getSource())
+                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, foundPistaAudio.getAlbum())
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, foundPistaAudio.getTitle())
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, foundPistaAudio.getArtist())
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, foundPistaAudio.getDuration()*1000).build();
+        }
+        return mediaMetadata;
+    }
+    */
+
+    private boolean prepareMediaPlayer;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mMusic = new ArrayList<MediaMetadataCompat>();
-        //Añadimos 3 canciones desde la librería de audio de youtube
-        mMusic.add(new MediaMetadataCompat.Builder().putString(MediaMetadata.METADATA_KEY_MEDIA_ID,
-                "https://www.youtube.com/audiolibrary_download?vid=f5cfb6bd8c048b98")
-                .putString(MediaMetadata.METADATA_KEY_TITLE, "Primera canción")
-                .putString(MediaMetadata.METADATA_KEY_ARTIST, "Artista 1")
-                .putLong(MediaMetadata.METADATA_KEY_DURATION, 109000).build());
-        mMusic.add(new MediaMetadataCompat.Builder().putString(MediaMetadata.METADATA_KEY_MEDIA_ID,
-                "https://www.youtube.com/audiolibrary_download?vid=ac7a38f4a568229c")
-                .putString(MediaMetadata.METADATA_KEY_TITLE, "Segunda canción")
-                .putString(MediaMetadata.METADATA_KEY_ARTIST, "Artista 2")
-                .putLong(MediaMetadata.METADATA_KEY_DURATION, 65000).build());
-        mMusic.add(new MediaMetadataCompat.Builder().putString(MediaMetadata.METADATA_KEY_MEDIA_ID,
-                "https://www.youtube.com/audiolibrary_download?vid=456229530454affd")
-                .putString(MediaMetadata.METADATA_KEY_TITLE, "Tercera canción")
-                .putString(MediaMetadata.METADATA_KEY_ARTIST, "Artista 3")
-                .putLong(MediaMetadata.METADATA_KEY_DURATION, 121000).build());
-
+        prepareMediaPlayer = false;
         mPlayer = new MediaPlayer();
         mSession = new MediaSessionCompat(this, "MiServicioMusical");
         mSession.setCallback(new MediaSessionCompat.Callback() {
             @Override
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
                 Log.d(TAG, ">>> onPlayFromMediaId");
-                for (MediaMetadataCompat item : mMusic) {
-                    if (item.getDescription().getMediaId().equals(mediaId)) {
-                        mCurrentTrack = item;
-                        break;
-                    }
+                MediaMetadataCompat mediaMetadataCompat = ((App) getApplication()).getMusicByMediaId(mediaId);
+                if (mediaMetadataCompat != null) {
+                    mCurrentTrack = mediaMetadataCompat;
+                    handlePlay();
                 }
-                Log.d(TAG, "handlePlay onPlayFromMediaId");
-                handlePlay();
             }
 
             @Override
             public void onPlay() {
-                Log.d(TAG, ">>> onPlay");
-                Log.d(TAG, ">>> mCurrentTrack == nul: " + (mCurrentTrack == null));
-                if (mCurrentTrack == null) {
-                    mCurrentTrack = mMusic.get(0);
-                    Log.d(TAG, "handlePlay onPlay() method");
-                    handlePlay();
-                } else {
-                    mPlayer.start();
-                    mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PLAYING));
+                if (prepareMediaPlayer) {
+                    Log.d(TAG, ">>> onPlay");
+                    Log.d(TAG, ">>> mCurrentTrack == nul: " + (mCurrentTrack == null));
+                    if (mCurrentTrack == null) {
+                        mCurrentTrack = ((App) getApplication()).getFirstMusic();
+                        Log.d(TAG, "handlePlay onPlay() method");
+                        handlePlay();
+                    } else {
+                        mPlayer.start();
+                        mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PLAYING));
+                    }
                 }
             }
 
             @Override
             public void onSkipToPrevious() {
                 super.onSkipToPrevious();
+                if (prepareMediaPlayer) {
+                    mPlayer.reset();
+                    mCurrentTrack = ((App) getApplication()).getLastMusic();
+                    handlePlay();
+                    Log.d(TAG, ">>> onSkipToPrevious");
+                }
             }
 
             @Override
             public void onSkipToNext() {
                 super.onSkipToNext();
+                if (prepareMediaPlayer) {
+                    mPlayer.reset();
+                    mCurrentTrack = ((App) getApplication()).getNextMusic();
+                    handlePlay();
+                    Log.d(TAG, ">>> onSkipToNext");
+                }
             }
 
             @Override
@@ -111,6 +142,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
                 mPlayer.pause();
                 mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PAUSED));
             }
+
         });
         mSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mSession.setActive(true);
@@ -125,11 +157,14 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
                         | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                         | PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID | PlaybackStateCompat.ACTION_PLAY_PAUSE
                         | PlaybackStateCompat.ACTION_PAUSE)
+                .addCustomAction(LIKE_ACTION, "Me gusta", R.drawable.ic_like)
+                .addCustomAction(NOT_LIKE_ACTION, "Me gusta", R.drawable.ic_not_like)
                 .setState(state, mPlayer.getCurrentPosition(), 1, SystemClock.elapsedRealtime())
                 .build();
     }
 
-    private void handlePlay() {                                                           
+    private void handlePlay() {
+        prepareMediaPlayer = false;
         mPlayer.seekTo(0);
         mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_BUFFERING));
         Log.d(TAG, "handlePlay 1");
@@ -146,6 +181,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        prepareMediaPlayer = true;
                         Log.d(TAG, ">>> onPrepared");
                         mediaPlayer.start();
                         mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PLAYING));
@@ -156,11 +192,23 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
+
                 Log.d(TAG, "onCompletion");
                 mp.seekTo(0);
                 mp.pause();
                 mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_STOPPED));
-                //mp.reset();
+
+
+                /*
+                if (prepareMediaPlayer) {
+                    mPlayer.reset();
+                    mCurrentTrack = ((App) getApplication()).getNextMusic();
+                    handlePlay();
+                    Log.d(TAG, ">>> onSkipToNext");
+                }
+                */
+
+
             }
         });
         Log.d(TAG, "handlePlay 2");
@@ -178,7 +226,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
         return new MediaBrowserServiceCompat.BrowserRoot(ROOT_ID, null);
     }
 
-    private TreeMapperMusic treeMapperMusic;
+    private static TreeMapperMusic treeMapperMusic;
     private String lastMediaIdMusic = Constant.EMPTY;
 
     @Override
@@ -188,19 +236,20 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
             GetMusicRepository getMusicRepository = new GetMusicRepository(this);
             getMusicRepository.setParseTree(new GetMusicRepository.ParseTree() {
                 @Override
-                public void parse(TreeMapperMusic treeMapperMusic) {
-                    ServicioMusica.this.treeMapperMusic = treeMapperMusic;
+                public void parse(TreeMapperMusic treeMapperMusicParam) {
+                    treeMapperMusic = treeMapperMusicParam;
                     result.sendResult(treeMapperMusic.getRootMenuBrowser());
                 }
             });
             getMusicRepository.getRepositorioMusical();
         } else if (parentId.equalsIgnoreCase(TreeMapperMusic.MEDIA_ID_MUSICS_BY_GENRE)
                 || parentId.equalsIgnoreCase(TreeMapperMusic.MEDIA_ID_MUSICS_BY_ALBUM)
-                ||parentId.equalsIgnoreCase(TreeMapperMusic.MEDIA_ID_MUSICS_BY_ARTIST)) {
+                || parentId.equalsIgnoreCase(TreeMapperMusic.MEDIA_ID_MUSICS_BY_ARTIST)) {
             lastMediaIdMusic = parentId;
             result.sendResult(treeMapperMusic.getLoanChildMenu(parentId));
         } else {
-            result.sendResult(treeMapperMusic.getLoanChildPLayer(lastMediaIdMusic, parentId));
+            if (treeMapperMusic != null && parentId !=null && lastMediaIdMusic != null)
+                result.sendResult(treeMapperMusic.getLoanChildPLayer(lastMediaIdMusic, parentId));
         }
     }
 

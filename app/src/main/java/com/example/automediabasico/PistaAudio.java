@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class PistaAudio {
 
+    private String id;
     @SerializedName("title")
     @Expose
     private String title;
@@ -120,4 +121,11 @@ public class PistaAudio {
         this.site = site;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 }
