@@ -24,6 +24,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.automediabasico.Constant.CONTENT_STYLE_BROWSABLE_HINT;
+import static com.example.automediabasico.Constant.CONTENT_STYLE_GRID_ITEM_HINT_VALUE;
+import static com.example.automediabasico.Constant.CONTENT_STYLE_LIST_ITEM_HINT_VALUE;
+import static com.example.automediabasico.Constant.CONTENT_STYLE_PLAYABLE_HINT;
+import static com.example.automediabasico.Constant.CONTENT_STYLE_SUPPORTED;
+
 public class ServicioMusica extends MediaBrowserServiceCompat {
 
     private final String TAG = ServicioMusica.class.getCanonicalName();
@@ -73,7 +79,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
             @Override
             public void onPlay() {
                 Log.d(TAG, ">>> onPlay");
-                Log.d(TAG, ">>> mCurrentTrack == nul: "+(mCurrentTrack == null));
+                Log.d(TAG, ">>> mCurrentTrack == nul: " + (mCurrentTrack == null));
                 if (mCurrentTrack == null) {
                     mCurrentTrack = mMusic.get(0);
                     Log.d(TAG, "handlePlay onPlay() method");
@@ -82,6 +88,16 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
                     mPlayer.start();
                     mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PLAYING));
                 }
+            }
+
+            @Override
+            public void onSkipToPrevious() {
+                super.onSkipToPrevious();
+            }
+
+            @Override
+            public void onSkipToNext() {
+                super.onSkipToNext();
             }
 
             @Override
@@ -122,7 +138,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
             mPlayer.reset();
             mPlayer.setDataSource(ServicioMusica.this, Uri.parse(mCurrentTrack.getDescription().getMediaId()));
         } catch (IOException e) {
-            Log.d(TAG, "handlePlay catch: "+e.toString());
+            Log.d(TAG, "handlePlay catch: " + e.toString());
         }
         mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
@@ -151,19 +167,41 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
         mPlayer.prepareAsync();
     }
 
-    @Override
-    public MediaBrowserServiceCompat.BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
-        return new MediaBrowserServiceCompat.BrowserRoot("ROOT", null);
-    }
+    private final String ROOT_ID = "my_media_root_id";
 
     @Override
-    public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
-        List<MediaBrowserCompat.MediaItem> list = new ArrayList<MediaBrowserCompat.MediaItem>();
-        for (MediaMetadataCompat m : mMusic) {
-            list.add(new MediaBrowserCompat.MediaItem(m.getDescription(),
-                    MediaBrowser.MediaItem.FLAG_PLAYABLE));
+    public MediaBrowserServiceCompat.BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
+        Bundle extras = new Bundle();
+        extras.putBoolean(CONTENT_STYLE_SUPPORTED, true);
+        extras.putInt(CONTENT_STYLE_PLAYABLE_HINT, CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
+        extras.putInt(CONTENT_STYLE_BROWSABLE_HINT, CONTENT_STYLE_LIST_ITEM_HINT_VALUE);
+        return new MediaBrowserServiceCompat.BrowserRoot(ROOT_ID, null);
+    }
+
+    private TreeMapperMusic treeMapperMusic;
+    private String lastMediaIdMusic = Constant.EMPTY;
+
+    @Override
+    public void onLoadChildren(@NonNull String parentId, @NonNull final Result<List<MediaBrowserCompat.MediaItem>> result) {
+        if (ROOT_ID.equals(parentId)) {
+            result.detach();
+            GetMusicRepository getMusicRepository = new GetMusicRepository(this);
+            getMusicRepository.setParseTree(new GetMusicRepository.ParseTree() {
+                @Override
+                public void parse(TreeMapperMusic treeMapperMusic) {
+                    ServicioMusica.this.treeMapperMusic = treeMapperMusic;
+                    result.sendResult(treeMapperMusic.getRootMenuBrowser());
+                }
+            });
+            getMusicRepository.getRepositorioMusical();
+        } else if (parentId.equalsIgnoreCase(TreeMapperMusic.MEDIA_ID_MUSICS_BY_GENRE)
+                || parentId.equalsIgnoreCase(TreeMapperMusic.MEDIA_ID_MUSICS_BY_ALBUM)
+                ||parentId.equalsIgnoreCase(TreeMapperMusic.MEDIA_ID_MUSICS_BY_ARTIST)) {
+            lastMediaIdMusic = parentId;
+            result.sendResult(treeMapperMusic.getLoanChildMenu(parentId));
+        } else {
+            result.sendResult(treeMapperMusic.getLoanChildPLayer(lastMediaIdMusic, parentId));
         }
-        result.sendResult(list);
     }
 
     @Override

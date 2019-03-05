@@ -1,10 +1,7 @@
 package com.example.automediabasico;
 
-import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.content.Context;
 import android.util.Log;
-import android.view.View;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -15,35 +12,25 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class MainActivity extends AppCompatActivity {
+/**
+ * Created by William_ST on 05/03/19.
+ */
 
-    private final String TAG = MainActivity.this.getClass().getSimpleName();
+public class GetMusicRepository {
+
+    private final String TAG = GetMusicRepository.class.getCanonicalName();
     private final String URL = "http://storage.googleapis.com/automotive-media/music.json";
     private RequestQueue requestQueue;
-
-    private FloatingActionButton floatingActionButton;
     private Gson gson;
     private Musica musica;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        requestQueue = Volley.newRequestQueue(this);
-
+    public GetMusicRepository(Context context) {
+        requestQueue = Volley.newRequestQueue(context);
         GsonBuilder gsonBuilder = new GsonBuilder();
         gson = gsonBuilder.create();
-
-        floatingActionButton = findViewById(R.id.fab);
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getRepositorioMusical();
-            }
-        });
     }
 
-    private void getRepositorioMusical() {
+    public void getRepositorioMusical() {
         StringRequest request = new StringRequest(Request.Method.GET, URL, onPostsLoaded, onPostsError);
         requestQueue.add(request);
     }
@@ -64,6 +51,10 @@ public class MainActivity extends AppCompatActivity {
                     pista.setImage(path + pista.getImage());
                 musica.getMusica().set(i, pista);
             }
+
+            if (parseTree != null) {
+                parseTree.parse(new TreeMapperMusic(musica));
+            }
         }
     };
 
@@ -73,4 +64,14 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, error.toString());
         }
     };
+
+    private ParseTree parseTree;
+
+    public interface ParseTree {
+        void parse(TreeMapperMusic treeMapperMusic);
+    }
+
+    public void setParseTree(ParseTree parseTree) {
+        this.parseTree = parseTree;
+    }
 }
