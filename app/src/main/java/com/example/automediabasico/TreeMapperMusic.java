@@ -54,15 +54,15 @@ public class TreeMapperMusic {
 
         for (PistaAudio pistaAudio : pistaAudioList) {
             if (!search(genderList, pistaAudio.getGenre()).equalsIgnoreCase(Constant.EMPTY)) {
-                genderList.add(createMediaItem(pistaAudio.getGenre(), pistaAudio.getGenre(), null, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE));
+                genderList.add(createMediaItem(pistaAudio.getGenre(), pistaAudio.getGenre(), Uri.parse(pistaAudio.getImage()), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE));
             }
 
             if (!search(albumList, pistaAudio.getAlbum()).equalsIgnoreCase(Constant.EMPTY)) {
-                albumList.add(createMediaItem(pistaAudio.getAlbum(), pistaAudio.getAlbum(), null, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE));
+                albumList.add(createMediaItem(pistaAudio.getAlbum(), pistaAudio.getAlbum(), Uri.parse(pistaAudio.getImage()), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE));
             }
 
             if (!search(artistList, pistaAudio.getArtist()).equalsIgnoreCase(Constant.EMPTY)) {
-                artistList.add(createMediaItem(pistaAudio.getArtist(), pistaAudio.getArtist(), null, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE));
+                artistList.add(createMediaItem(pistaAudio.getArtist(), pistaAudio.getArtist(), Uri.parse(pistaAudio.getImage()), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE));
             }
         }
 
@@ -120,7 +120,7 @@ public class TreeMapperMusic {
         mediaDescriptionBuilder.setIconUri(iconUri);
         Bundle extras = new Bundle();
         extras.putInt(CONTENT_STYLE_BROWSABLE_HINT,
-                CONTENT_STYLE_LIST_ITEM_HINT_VALUE);
+                CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
         extras.putInt(CONTENT_STYLE_PLAYABLE_HINT,
                 CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
 

@@ -38,41 +38,6 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
     private MediaPlayer mPlayer;
     private MediaMetadataCompat mCurrentTrack;
     private final String LIKE_ACTION = "like_action", NOT_LIKE_ACTION = "not_like_action";
-    /*
-    private MediaMetadataCompat getFirstMusic() {
-        PistaAudio foundPistaAudio = ((App) getApplication()).getMusica().getMusica().get(0);
-        MediaMetadataCompat mediaMetadata = null;
-        if (foundPistaAudio != null) {
-            mediaMetadata = new MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, foundPistaAudio.getSource())
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, foundPistaAudio.getAlbum())
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, foundPistaAudio.getTitle())
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, foundPistaAudio.getArtist())
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, foundPistaAudio.getDuration()*1000).build();
-        }
-        return mediaMetadata;
-    }
-
-    private MediaMetadataCompat getMusicByMediaId(String mediaId) {
-        PistaAudio foundPistaAudio = null;
-        for (PistaAudio pistaAudio : ((App) getApplication()).getMusica().getMusica()) {
-            if (pistaAudio.getId().equalsIgnoreCase(mediaId)) {
-                foundPistaAudio = pistaAudio;
-                break;
-            }
-        }
-        MediaMetadataCompat mediaMetadata = null;
-        if (foundPistaAudio != null) {
-            mediaMetadata = new MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, foundPistaAudio.getSource())
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, foundPistaAudio.getAlbum())
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, foundPistaAudio.getTitle())
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, foundPistaAudio.getArtist())
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, foundPistaAudio.getDuration()*1000).build();
-        }
-        return mediaMetadata;
-    }
-    */
 
     private boolean prepareMediaPlayer;
 
@@ -139,8 +104,10 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
 
             @Override
             public void onPause() {
-                mPlayer.pause();
-                mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PAUSED));
+                if (prepareMediaPlayer) {
+                    mPlayer.pause();
+                    mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PAUSED));
+                }
             }
 
         });
@@ -186,29 +153,26 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
                         mediaPlayer.start();
                         mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_PLAYING));
                     }
-                }, 3000);
+                }, 1000);
             }
         });
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-
-                Log.d(TAG, "onCompletion");
-                mp.seekTo(0);
-                mp.pause();
-                mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_STOPPED));
-
-
                 /*
+                TODO : 0001 Práctica: Ajustando el progreso de la reproducción.
+                    Log.d(TAG, "onCompletion");
+                    mp.seekTo(0);
+                    mp.pause();
+                    mSession.setPlaybackState(buildState(PlaybackStateCompat.STATE_STOPPED));
+                */
+
                 if (prepareMediaPlayer) {
                     mPlayer.reset();
                     mCurrentTrack = ((App) getApplication()).getNextMusic();
                     handlePlay();
                     Log.d(TAG, ">>> onSkipToNext");
                 }
-                */
-
-
             }
         });
         Log.d(TAG, "handlePlay 2");
@@ -248,7 +212,7 @@ public class ServicioMusica extends MediaBrowserServiceCompat {
             lastMediaIdMusic = parentId;
             result.sendResult(treeMapperMusic.getLoanChildMenu(parentId));
         } else {
-            if (treeMapperMusic != null && parentId !=null && lastMediaIdMusic != null)
+            if (treeMapperMusic != null && parentId != null && lastMediaIdMusic != null)
                 result.sendResult(treeMapperMusic.getLoanChildPLayer(lastMediaIdMusic, parentId));
         }
     }
